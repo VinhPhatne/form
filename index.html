@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rechnungsadresse hinzufügen</title>
+    <!-- Add Axios CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        :root {
+            --primary-red: #dd1919;
+            --primary-green: #4CAF50;
+            --form-gray: #f5f5f5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-red);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .logo-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .logo {
+            color: white;
+            font-size: 2.5rem;
+            background-color: #4CAF50;
+            padding: 10px 20px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .strawberry {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 1.5rem;
+        }
+
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .zip-city {
+            display: flex;
+            gap: 15px;
+        }
+
+        .zip {
+            width: 30%;
+        }
+
+        .city {
+            width: 70%;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .back {
+            background-color: var(--primary-green);
+            color: white;
+        }
+
+        /* .submit {
+            background-color: #6eab70;
+            color: white;
+        } */
+
+        .submit {
+            background-color: #6eab70;
+            color: white;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .submit.active {
+            background-color: #4CAF50;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Loading spinner */
+        /* .spinner {
+            display: block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        } */
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            color: white;
+            display: none;
+            z-index: 1000;
+        }
+
+        .toast.success {
+            background-color: var(--primary-green);
+        }
+
+        .toast.error {
+            background-color: white;
+            color: #000;
+        }
+
+        @media (max-width: 480px) {
+            .form-container {
+                padding: 15px;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- <div class="logo-container">
+        <div class="logo">
+            Karls
+            <span class="strawberry">🍓</span>
+        </div>
+    </div> -->
+    
+    <div class="form-container">
+        <h1>Rechnungsadresse hinzufügen</h1>
+        <div class="loading">Daten werden geladen...</div>
+        <div class="spinner"></div>
+        
+        <form id="addressForm" class="form">
+            <div class="form-group">
+                <input type="text" id="name" placeholder="Name" required>
+            </div>
+            
+            <div class="form-group">
+                <input type="text" id="nameZusatz" placeholder="Name - Zusatz">
+            </div>
+            
+            <div class="form-group">
+                <input type="text" id="strasse" placeholder="Straße" required>
+            </div>
+            
+            <div class="form-group zip-city">
+                <input type="text" id="plz" placeholder="PLZ" class="zip" required>
+                <input type="text" id="ort" placeholder="Ort" class="city" required>
+            </div>
+            
+            <div class="button-container">
+                <button type="button" class="back" onclick="goBack()">Zurück</button>
+                <button type="submit" class="submit">Speichern</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast"></div>
+
+    <script>
+        // Axios configuration
+        const api = axios.create({
+            baseURL: '/invoice/submit-form',
+            timeout: 5000,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        // Toast notification function
+        function showToast(message, type) {
+            const toast = document.querySelector('.toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Loading spinner functions
+        function showSpinner() {
+            document.querySelector('.spinner').style.display = 'block';
+        }
+
+        function hideSpinner() {
+            document.querySelector('.spinner').style.display = 'none';
+        }
+
+        // Hide loading message after 1 second
+        // setTimeout(() => {
+        //     document.querySelector('.loading').style.display = 'none';
+        // }, 1000);
+
+        // Form submission handler
+        document.getElementById('addressForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                nameZusatz: document.getElementById('nameZusatz').value,
+                strasse: document.getElementById('strasse').value,
+                plz: document.getElementById('plz').value,
+                ort: document.getElementById('ort').value
+            };
+
+            try {
+                showSpinner();
+                
+                const response = await api.post('/address', formData);
+                
+                if (response.status === 200 || response.status === 201) {
+                    showToast('Adresse erfolgreich gespeichert!', 'success');
+                    // Optional: Clear form
+                    document.getElementById('addressForm').reset();
+                } else {
+                    throw new Error('Fehler beim Speichern der Adresse');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // showToast(
+                //     error.response?.data?.message || 'Ein Fehler ist aufgetreten',
+                //     'error'
+                // );
+            } finally {
+                hideSpinner();
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("addressForm");
+            const inputs = form.querySelectorAll("input");
+            const submitButton = document.querySelector(".submit");
+
+            function checkInputs() {
+                let hasValue = Array.from(inputs).some(input => input.value.trim() !== "");
+                if (hasValue) {
+                    submitButton.classList.add("active");
+                } else {
+                    submitButton.classList.remove("active");
+                }
+            }
+
+            inputs.forEach(input => {
+                input.addEventListener("input", checkInputs);
+            });
+
+            checkInputs(); // Kiểm tra trạng thái ban đầu
+        });
+
+        // Back button handler
+        function goBack() {
+            window.history.back();
+        }
+
+        // Error interceptor
+        api.interceptors.response.use(
+            response => response,
+            error => {
+                if (error.response) {
+                    // Request was made and server responded with error status
+                    console.error('Response Error:', error.response.data);
+                } else if (error.request) {
+                    // Request was made but no response received
+                    console.error('Request Error:', error.request);
+                } else {
+                    // Something happened in setting up the request
+                    console.error('Error:', error.message);
+                }
+                return Promise.reject(error);
+            }
+        );
+    </script>
+</body>
+</html>
