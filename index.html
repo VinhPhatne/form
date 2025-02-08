@@ -122,11 +122,6 @@
             color: white;
         }
 
-        /* .submit {
-            background-color: #6eab70;
-            color: white;
-        } */
-
         .submit {
             background-color: #6eab70;
             color: white;
@@ -138,18 +133,6 @@
             opacity: 1;
             pointer-events: auto;
         }
-
-        /* Loading spinner */
-        /* .spinner {
-            display: block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        } */
 
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -193,13 +176,6 @@
     </style>
 </head>
 <body>
-    <!-- <div class="logo-container">
-        <div class="logo">
-            Karls
-            <span class="strawberry">🍓</span>
-        </div>
-    </div> -->
-    
     <div class="form-container">
         <h1>Rechnungsadresse hinzufügen</h1>
         <div class="loading">Daten werden geladen...</div>
@@ -264,11 +240,6 @@
             document.querySelector('.spinner').style.display = 'none';
         }
 
-        // Hide loading message after 1 second
-        // setTimeout(() => {
-        //     document.querySelector('.loading').style.display = 'none';
-        // }, 1000);
-
         // Form submission handler
         document.getElementById('addressForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -295,10 +266,6 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                // showToast(
-                //     error.response?.data?.message || 'Ein Fehler ist aufgetreten',
-                //     'error'
-                // );
             } finally {
                 hideSpinner();
             }
@@ -322,7 +289,7 @@
                 input.addEventListener("input", checkInputs);
             });
 
-            checkInputs(); // Kiểm tra trạng thái ban đầu
+            checkInputs(); 
         });
 
         // Back button handler
@@ -335,13 +302,10 @@
             response => response,
             error => {
                 if (error.response) {
-                    // Request was made and server responded with error status
                     console.error('Response Error:', error.response.data);
                 } else if (error.request) {
-                    // Request was made but no response received
                     console.error('Request Error:', error.request);
                 } else {
-                    // Something happened in setting up the request
                     console.error('Error:', error.message);
                 }
                 return Promise.reject(error);
