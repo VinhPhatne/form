@@ -190,10 +190,10 @@
 			}
 
 			.error-container {
-				padding-bottom: 183px;
 				display: flex;
 				flex-direction: column;
 				align-items: center;
+				padding-bottom: 30px;
 			}
 
 			.title-success {
@@ -428,7 +428,6 @@
 				if (qrcode) {
 					try {
 						const response = await api.post("/invoice/scan-qrcode", { qrcode });
-						console.log(response)
 						if (response.data && response.data.data.state) {
 							console.log(response.data.data.state)
 							switch (response.data.data.state) {
@@ -444,7 +443,6 @@
 									document.querySelector(".spinner").style.display = "none";
 							}
 						} else {
-							// Original behavior if no state is found
 							document.querySelector(".form-container").style.display = "block";
 							document.querySelector(".loading").style.display = "none";
 							document.querySelector(".spinner").style.display = "none";
@@ -541,6 +539,13 @@
 							qrcode,
 						});
 
+						if (response.data && response.data.result === false) {
+							clearInterval(intervalId);
+							document.querySelector(".loading-container").style.display = "none";
+							document.querySelector(".error-container").style.display = "flex";
+							return;
+						}
+
 						if (response.data && response.data.data) {
 							data = response.data.data;
 							clearInterval(intervalId);
@@ -562,6 +567,12 @@
 						const response = await api.post("/invoice/check-status", {
 							qrcode,
 						});
+						if (response.data && response.data.result === false) {
+							clearInterval(intervalId);
+							document.querySelector(".loading-container").style.display = "none";
+							document.querySelector(".error-container").style.display = "flex";
+							break;
+						}
 						if (response.data && response.data.data) {
 							data = response.data.data;
 							await downloadFile(data);
